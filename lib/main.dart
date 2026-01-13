@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/widgets/buttons.dart';
+import 'widgets/buttons.dart';
 
 void main() {
   runApp(const MyApp());
@@ -28,7 +28,42 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  String _display = '0';
+  @override
+  void dispose() {
+    _ctrlDisplay.dispose();
+    super.dispose();
+  }
+
+  int _counter = 0;
+  final TextEditingController _ctrlDisplay = TextEditingController(text: "0");
+  double aux1 = 0;
+  double aux2 = 0;
+  String operacion = "";
+
+  void setAux1() {
+    aux1 = double.parse(_ctrlDisplay.text);
+    _ctrlDisplay.text = "";
+  }
+
+  void setAux2() {
+    aux2 = double.parse(_ctrlDisplay.text);
+    _ctrlDisplay.text = "";
+  }
+
+  void calcular() {
+    double resultado = 0;
+    if (operacion == "+") {
+      resultado = aux1 + aux2;
+    }
+    _ctrlDisplay.text = "${resultado}";
+  }
+
+  void _incrementCounter() {
+    setState(() {
+      _counter++;
+    });
+  }
+
   double? _firstOperand;
   String? _operator;
   bool _waitingForOperand = false;
@@ -36,16 +71,17 @@ class _MyHomePageState extends State<MyHomePage> {
   void _buttonPressed(String buttonText) {
     setState(() {
       if (buttonText == 'C') {
-        _display = '0';
+        _ctrlDisplay.text = '0';
         _firstOperand = null;
         _operator = null;
         _waitingForOperand = false;
+        _counter = 0;
       } else if (buttonText == '+' ||
           buttonText == '-' ||
           buttonText == '*' ||
           buttonText == '/') {
         if (_firstOperand == null) {
-          _firstOperand = double.tryParse(_display);
+          _firstOperand = double.tryParse(_ctrlDisplay.text);
         } else if (_operator != null) {
           _calculate();
         }
@@ -54,18 +90,20 @@ class _MyHomePageState extends State<MyHomePage> {
       } else if (buttonText == '=') {
         _calculate();
         _operator = null;
-        _waitingForOperand = false;
+        _waitingForOperand = true;
       } else if (buttonText == '.') {
-        if (!_display.contains('.')) {
-          _display += '.';
+        if (!_ctrlDisplay.text.contains('.')) {
+          _ctrlDisplay.text += '.';
         }
       } else {
         // Números
         if (_waitingForOperand) {
-          _display = buttonText;
+          _ctrlDisplay.text = buttonText;
           _waitingForOperand = false;
         } else {
-          _display = _display == '0' ? buttonText : _display + buttonText;
+          _ctrlDisplay.text = _ctrlDisplay.text == '0'
+              ? buttonText
+              : _ctrlDisplay.text + buttonText;
         }
       }
     });
@@ -73,26 +111,26 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void _calculate() {
     if (_firstOperand != null && _operator != null) {
-      double secondOperand = double.tryParse(_display) ?? 0;
+      double secondOperand = double.tryParse(_ctrlDisplay.text) ?? 0;
       switch (_operator) {
         case '+':
-          _display = (_firstOperand! + secondOperand).toString();
+          _ctrlDisplay.text = (_firstOperand! + secondOperand).toString();
           break;
         case '-':
-          _display = (_firstOperand! - secondOperand).toString();
+          _ctrlDisplay.text = (_firstOperand! - secondOperand).toString();
           break;
         case '*':
-          _display = (_firstOperand! * secondOperand).toString();
+          _ctrlDisplay.text = (_firstOperand! * secondOperand).toString();
           break;
         case '/':
           if (secondOperand != 0) {
-            _display = (_firstOperand! / secondOperand).toString();
+            _ctrlDisplay.text = (_firstOperand! / secondOperand).toString();
           } else {
-            _display = 'Error';
+            _ctrlDisplay.text = 'Error';
           }
           break;
       }
-      _firstOperand = double.tryParse(_display);
+      _firstOperand = double.tryParse(_ctrlDisplay.text);
     }
   }
 
@@ -105,13 +143,25 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
       body: Column(
         children: [
+          // Counter display
+          Container(
+            alignment: Alignment.center,
+            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+            child: Text(
+              'Counter: $_counter',
+              style: const TextStyle(fontSize: 24, color: Colors.white),
+            ),
+          ),
           // Barra de display
           Container(
             alignment: Alignment.centerRight,
             padding: const EdgeInsets.symmetric(vertical: 30, horizontal: 12),
-            child: Text(
-              _display,
+            child: TextField(
+              controller: _ctrlDisplay,
+              readOnly: true,
+              textAlign: TextAlign.right,
               style: const TextStyle(fontSize: 48, fontWeight: FontWeight.bold),
+              decoration: const InputDecoration(border: InputBorder.none),
             ),
           ),
           // Botones
@@ -206,7 +256,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   children: [
                     Expanded(
                       child: BtnDark(
-                        numero: "0",
+                        numero: '0',
                         onPressed: () => _buttonPressed('0'),
                       ),
                     ),
@@ -236,6 +286,12 @@ class _MyHomePageState extends State<MyHomePage> {
                       child: BtnPurple(
                         numero: 'C',
                         onPressed: () => _buttonPressed('C'),
+                      ),
+                    ),
+                    Expanded(
+                      child: BtnGreen(
+                        numero: '+',
+                        onPressed: _incrementCounter,
                       ),
                     ),
                   ],
